@@ -7,12 +7,12 @@ Réplica local de Inspecciones Piura, con la misma interfaz, navegación, formul
 - `Código.js`: backend de Google Apps Script.
 - `Index.html`: interfaz incluida en Apps Script.
 - `github_frontend/index.html`: la misma interfaz para el nuevo repositorio de GitHub.
-- `StaticMasterData.js`: sedes CD Tumbes y CD Talara; equipos, auditores y preguntas pendientes de los archivos de entrada.
+- `StaticMasterData.js`: maestros generados desde la plantilla cargada: 82 equipos de Tumbes, 67 de Talara, 15 tipos de inspección, 118 preguntas y 1 auditor.
 - `archivo_base/`: carpeta para cargar los Excel de Tumbes y Talara.
 
 No se copiaron inventarios, archivos Excel, historial Git ni conexiones de Piura/Sullana.
 
-## Cuando lleguen los archivos
+## Regenerar los maestros desde los archivos
 
 Conservar el formato del proyecto original:
 
@@ -29,10 +29,19 @@ Conservar el formato del proyecto original:
 - Google Sheet: https://docs.google.com/spreadsheets/d/1VUai8d57pKhPjsnI8RJkQhkAlw2GL_7GbG1xd6uU5HQ/edit
 - Aplicación web: https://script.google.com/macros/s/AKfycbxTveQj0B-B-JH21_NvXnQDpxuZeXrsRQnTpYhu83CWCDcTm8YgPMSLYQ2pg3ZZh3tUgA/exec
 
-La versión 2 está implementada en Apps Script. La comprobación HTTP sin sesión devolvió 403 de Google; queda pendiente validar el acceso y la autorización con la cuenta propietaria. La URL de la aplicación está configurada en ambos HTML. El ID de Apps Script está en el archivo local `.clasp.json`, excluido de Git. La carga de equipos, auditores y preguntas queda pendiente de los Excel.
+La comprobación HTTP sin sesión devolvió 403 de Google; queda pendiente validar el acceso y la autorización con la cuenta propietaria. La URL de la aplicación está configurada en ambos HTML. El ID de Apps Script está en el archivo local `.clasp.json`, excluido de Git. StaticMasterData.js contiene los maestros preparados para cargar desde Apps Script. Los dos equipos de Alarma CI marcados como CD Chimbote están excluidos provisionalmente y figuran en excludedEquipment.
 
-## Funciones históricas heredadas
+## Generar desde Apps Script
 
-Se conservaron las reglas del original con los nombres regionales sustituidos: Tumbes ocupa el lugar de Piura (enero a diciembre de 2026) y Talara el de Sullana (solo octubre de 2026). También se conserva la función opcional que genera observaciones históricas 5S/OPL. Estas funciones generan registros sintéticos; no se han ejecutado contra ninguna hoja. Revisar los periodos y reglas antes de usarlas con los nuevos datos.
+Después de sincronizar el código, ejecutar en este orden:
 
-La comprobación heredada `node scripts/verify-historical-periods.cjs` requiere maestros con equipos de ambas sedes. Antes de recibir los Excel, las colecciones de equipos y preguntas permanecen vacías.
+1. `reconstruirMaestros()`: carga los equipos y preguntas de StaticMasterData.js en las tablas MA_, conservando las transacciones.
+2. `prepararConfiguracionCarga()`: permite revisar en CFG_Carga el centro (TODOS para ambas agencias) y la fecha límite (por ejemplo 2026-10-27).
+3. `crearInspeccionesHistoricasEneroActual()`: genera una inspección por equipo y mes en ambas agencias de enero a octubre de 2026, sin duplicar los equipos/mes existentes.
+4. `aplicarObservacionesHistoricas5sOpl()`: aplica las observaciones generadas a preguntas 5S/OPL, preservando las inspecciones manuales.
+
+Curva objetivo de inspecciones conformes: enero 90%, febrero 94%, marzo 97%, abril y mayo 100%, junio 97%, julio 98%, agosto a octubre 100%. Los conteos se redondean por agencia y mes. Las filas automáticas REG_HIST_ están identificadas como GENERADO AUTOMATICAMENTE - escenario historico 2026; son un escenario generado, no constancia de inspecciones realizadas.
+
+Las funciones `previsualizarInspeccionesHistoricasEneroActual()` y `previsualizarObservacionesHistoricas5sOpl()` muestran los recuentos antes de aplicar. El script `node scripts/verify-historical-periods.cjs` comprueba los periodos, la curva de ambas agencias, los meses al 100%, la conservación de registros manuales y la repetición sin duplicados.
+
+La subida del código no ejecuta estas funciones ni carga registros en la hoja.

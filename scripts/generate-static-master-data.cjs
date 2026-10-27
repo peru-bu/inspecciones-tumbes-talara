@@ -10,6 +10,7 @@ const EQUIPMENT_FILES = fs.readdirSync(path.join(ROOT, 'archivo_base'))
   .map(name => path.join(ROOT, 'archivo_base', name));
 const QUESTIONS_FILE = path.join(ROOT, 'archivo_base', 'Base de muestra.xlsx');
 const OUTPUT_FILE = path.join(ROOT, 'StaticMasterData.js');
+const ALLOWED_CENTERS = new Map([['cd tumbes', 'CD Tumbes'], ['cd talara', 'CD Talara']]);
 
 const QUESTION_SOURCE_BY_TEMPLATE_SHEET = {
   'Alarma CI': 'Alarma Contra Incendio',
@@ -107,6 +108,7 @@ async function main() {
   const inspections = new Map();
   const equipment = new Map();
   const questions = [];
+  const excludedEquipment = [];
 
   for (const sheet of questionSheets) {
     const headers = (sheet.data[0] || []).map(clean);
@@ -130,6 +132,9 @@ async function main() {
       location: columnIndex(headers, 'Ubicación'),
       equipment: columnIndex(headers, 'Equipo'),
     };
+    for (const required of ['code', 'center', 'location']) {
+      if (indexes[required] < 0) throw new Error('Falta columna obligatoria ' + required + ' en ' + sheet.sheet);
+    }
     const questionSourceName = QUESTION_SOURCE_BY_TEMPLATE_SHEET[sheet.sheet] || sheet.sheet;
     const questionSheet = questionsBySheet.get(questionSourceName);
 
@@ -169,12 +174,17 @@ async function main() {
     }
 
     for (const row of sheet.data.slice(1)) {
-      const center = cell(row, indexes.center);
+      const sourceCenter = cell(row, indexes.center);
+      const center = ALLOWED_CENTERS.get(key(sourceCenter));
       const code = cell(row, indexes.code);
       const location = cell(row, indexes.location);
       const equipmentName = cell(row, indexes.equipment) || sheet.sheet;
 
-      if (!center || (!code && !location)) continue;
+      if (!sourceCenter || (!code && !location)) continue;
+      if (!center) {
+        excludedEquipment.push({ sourceFile: sheet.sourceFile, sheet: sheet.sheet, center: sourceCenter, code, location });
+        continue;
+      }
 
       const centerId = stableId('CEN', [center]);
       const equipmentId = stableId('EQP', [center, sheet.sheet, code, location, equipmentName]);
@@ -193,15 +203,19 @@ async function main() {
     }
   }
 
+  const usedInspections = new Set([...equipment.values()].map(row => row[3]));
+  if (centers.size !== 2) throw new Error('Se esperaban equipos de Tumbes y Talara. Revisa la columna CD.');
+
   const data = {
+    excludedEquipment,
     generatedAt: new Date().toISOString(),
     sourceEquipmentFile: EQUIPMENT_FILES.map(file => path.relative(ROOT, file).replace(/\\/g, '/')),
     sourceQuestionsFile: 'archivo_base/Base de muestra.xlsx',
     centers: sortRows([...centers.values()], [1]),
     auditors: sortRows([...auditors.values()], [1]),
-    inspections: sortRows([...inspections.values()], [1]),
+    inspections: sortRows([...inspections.values()].filter(row => usedInspections.has(row[0])), [1]),
     equipment: sortRows([...equipment.values()], [2, 4, 6, 5]),
-    questions: sortRows(questions, [2, 3]),
+    questions: sortRows(questions.filter(row => usedInspections.has(row[1])), [2, 3]),
   };
 
   fs.writeFileSync(
@@ -219,6 +233,7 @@ async function main() {
         inspections: data.inspections.length,
         equipment: data.equipment.length,
         questions: data.questions.length,
+        excludedEquipment,
       },
       null,
       2,

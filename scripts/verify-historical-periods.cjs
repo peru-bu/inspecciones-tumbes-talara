@@ -38,15 +38,15 @@ function preview(endDate, center = '') {
   return context.appCrearInspeccionesHistoricas_({ dryRun: true });
 }
 const october = preview('2026-10-20');
-assert.equal(october.inspectionsToCreate, tumbes * 10 + talara);
-assert.deepEqual(Array.from(october.monthsByCenter['CD Talara']), ['2026-10']);
+assert.equal(october.inspectionsToCreate, (tumbes + talara) * 10);
+assert.equal(october.monthsByCenter['CD Talara'].length, 10);
 assert.equal(october.monthsByCenter['CD Tumbes'].length, 10);
-assert.equal(preview('2026-09-30', 'CD Talara').inspectionsToCreate, 0);
-assert.equal(preview('2026-11-20', 'CD Talara').inspectionsToCreate, talara);
+assert.equal(preview('2026-09-30', 'CD Talara').inspectionsToCreate, talara * 9);
+assert.equal(preview('2026-11-20', 'CD Talara').inspectionsToCreate, talara * 10);
 assert.equal(preview('2026-10-20', 'CD Chimbote').inspectionsToCreate, 0);
 context.existingRuns = equipment.filter(row => row[2] === 'CD Talara')
   .map(row => ({ equipo_id: row[0], fecha: '2026-10-01' }));
-assert.equal(preview('2026-10-20', 'CD Talara').inspectionsToCreate, 0);
+assert.equal(preview('2026-10-20', 'CD Talara').inspectionsToCreate, talara * 9);
 
 // Ejecuta la generacion y la curva completas sobre hojas en memoria.
 const headers = vm.runInContext('APP_HEADERS', context);
@@ -83,29 +83,43 @@ assert.equal(JSON.stringify([runs.rows, answers.rows]), snapshot, 'La previsuali
 const applied = context.appAplicarObservacionesHistoricas5sOpl_({ dryRun: false });
 assert.equal(applied.answersToNo, curvePreview.answersToNo);
 const byMonth = {};
-runs.rows.slice(1).filter(row => row[4] === 'CD Tumbes' && row[0] !== 'REG_MANUAL').forEach(row => {
-  const month = row[2].slice(0, 7);
-  if (!byMonth[month]) byMonth[month] = { inspections: 0, withObservation: 0 };
-  byMonth[month].inspections++;
-  if (row[12]) byMonth[month].withObservation++;
+const noRunIds = new Set(answers.rows.slice(1).filter(row => row[5] === 'NO').map(row => row[1]));
+runs.rows.slice(1).filter(row => row[0].startsWith('REG_HIST_')).forEach(row => {
+  const key = row[4] + '|' + row[2].slice(0, 7);
+  if (!byMonth[key]) byMonth[key] = { inspections: 0, withObservation: 0 };
+  byMonth[key].inspections++;
+  if (noRunIds.has(row[0])) byMonth[key].withObservation++;
+  assert.ok(row[12].startsWith('GENERADO AUTOMATICAMENTE'));
 });
-Object.entries(byMonth).forEach(([month, counts]) => {
-  assert.equal(counts.inspections, tumbes);
-  if (month < '2026-05') {
-    assert.ok(counts.withObservation > 0);
-    assert.ok(counts.withObservation / counts.inspections < 0.15, 'Los hallazgos iniciales deben ser moderados');
-  }
-  else assert.equal(counts.withObservation, 0, `${month} debe quedar 100% conforme`);
+const expectedIssuePercent = { '01': 10, '02': 6, '03': 3, '04': 0, '05': 0, '06': 3, '07': 2, '08': 0, '09': 0, '10': 0 };
+Object.entries(byMonth).forEach(([key, counts]) => {
+  const [agency, month] = key.split('|');
+  const total = agency === 'CD Tumbes' ? tumbes : talara;
+  assert.equal(counts.inspections, total);
+  assert.equal(counts.withObservation, Math.round(total * expectedIssuePercent[month.slice(5)] / 100));
 });
-const unchangedRunIds = new Set(runs.rows.slice(1)
-  .filter(row => row[4] === 'CD Talara' || row[2] >= '2026-05-01' || row[0] === 'REG_MANUAL')
+assert.equal(Object.keys(byMonth).length, 20);
+answers.rows.slice(1).filter(row => row[5] === 'NO')
+  .forEach(row => assert.ok(context.appHistoricalIssueType_(row[4]), 'Solo preguntas 5S/OPL'));
+const cleanMonths = new Set(['04', '05', '08', '09', '10']);
+const cleanRunIds = new Set(runs.rows.slice(1)
+  .filter(row => cleanMonths.has(row[2].slice(5, 7)) || row[0] === 'REG_MANUAL')
   .map(row => row[0]));
-answers.rows.slice(1).filter(row => unchangedRunIds.has(row[1])).forEach(row => assert.equal(row[5], 'SI'));
+answers.rows.slice(1).filter(row => cleanRunIds.has(row[1])).forEach(row => assert.equal(row[5], 'SI'));
 assert.equal(runs.rows.at(-1)[12], 'Original');
 const afterApply = JSON.stringify([runs.rows, answers.rows]);
 context.appAplicarObservacionesHistoricas5sOpl_({ dryRun: false });
 assert.equal(JSON.stringify([runs.rows, answers.rows]), afterApply, 'Repetir no debe duplicar observaciones');
-console.log(JSON.stringify({ curveChecks: 'OK', byMonth }, null, 2));
+console.log(JSON.stringify({ curveChecks: 'OK', periods: Object.keys(byMonth).length, observations: applied.runsWithObservation }, null, 2));
 console.log(JSON.stringify({ ok: true, tumbesEquipment: tumbes, talaraEquipment: talara,
   octoberPreview: october.inspectionsToCreate, answers: october.answersToCreate,
-  checks: ['periods by center', 'Talara before/after October', 'exclude other centers', 'skip existing inspections'] }, null, 2));
+  checks: ['periods by center', 'both agencies January-October', 'exclude other centers', 'skip existing inspections'] }, null, 2));
+
+// Al regenerar, se omiten equipos/mes ya existentes.
+context.existingRuns = runs.rows.slice(1).map(row => ({ equipo_id: row[9], fecha: row[2] }));
+assert.equal(context.appCrearInspeccionesHistoricas_({ dryRun: true }).inspectionsToCreate, 0);
+// Abril debe corregir observaciones generadas con una regla anterior.
+const aprilRun = runs.rows.find(row => row[0].startsWith('REG_HIST_') && row[2].startsWith('2026-04'));
+answers.rows.find(row => row[1] === aprilRun[0] && context.appHistoricalIssueType_(row[4]))[5] = 'NO';
+context.appAplicarObservacionesHistoricas5sOpl_({ dryRun: false });
+assert.ok(answers.rows.filter(row => row[1] === aprilRun[0]).every(row => row[5] === 'SI'));

@@ -1,11 +1,18 @@
 const REVIEW_SPREADSHEET_ID = '1VUai8d57pKhPjsnI8RJkQhkAlw2GL_7GbG1xd6uU5HQ';
 const APP_FRONTEND_GITHUB_URL = 'https://raw.githubusercontent.com/peru-bu/inspecciones-tumbes-talara/main/github_frontend/index.html';
 
-// Periodos de la carga historica de Tumbes 2026; no afectan inspecciones manuales.
+// Periodos del escenario historico generado de ambas agencias; no afecta registros manuales.
 const APP_HISTORICAL_PERIODS = {
-  'CD Tumbes': { startDate: '2026-01-01', endDate: '2026-12-31' },
-  'CD Talara': { startDate: '2026-10-01', endDate: '2026-10-31' }
+  'CD Tumbes': { startDate: '2026-01-01', endDate: '2026-10-31' },
+  'CD Talara': { startDate: '2026-01-01', endDate: '2026-10-31' }
 };
+
+// Porcentaje objetivo de inspecciones generadas con hallazgos, por agencia y mes.
+const APP_HISTORICAL_ISSUE_PERCENT = {
+  '01': 10, '02': 6, '03': 3, '04': 0, '05': 0,
+  '06': 3, '07': 2, '08': 0, '09': 0, '10': 0
+};
+const APP_HISTORICAL_LABEL = 'GENERADO AUTOMATICAMENTE - escenario historico 2026';
 
 const APP_CONFIG = {
   spreadsheetId: REVIEW_SPREADSHEET_ID,
@@ -533,11 +540,8 @@ function appAplicarObservacionesHistoricas5sOpl_(options) {
     const runSheet = appSheet_(spreadsheet, APP_CONFIG.tables.inspectionRuns, APP_HEADERS.inspectionRuns);
     const answerSheet = appSheet_(spreadsheet, APP_CONFIG.tables.answers, APP_HEADERS.answers);
     const historicalRuleByCenter = {
-      'CD Tumbes': {
-        '01': 10, '02': 8, '03': 5,
-        '04': 2, '05': 0, '06': 0,
-        '07': 0, '08': 0, '09': 0, '10': 0
-      }
+      'CD Tumbes': APP_HISTORICAL_ISSUE_PERCENT,
+      'CD Talara': APP_HISTORICAL_ISSUE_PERCENT
     };
     const result = {
       ok: true,
@@ -556,6 +560,8 @@ function appAplicarObservacionesHistoricas5sOpl_(options) {
           .filter(month => month <= scope.endDate.slice(0, 7));
         return acc;
       }, {}),
+      byMonthAndCenter: [],
+      generatedScenario: true,
       runsReviewed: 0,
       candidateAnswers: 0,
       answersToNo: 0,
@@ -564,7 +570,7 @@ function appAplicarObservacionesHistoricas5sOpl_(options) {
         '5S': 0,
         OPL: 0
       },
-      rule: 'CD Tumbes: mejora gradual con ~10%, ~8%, ~5% y ~2% de inspecciones con hallazgos de enero a abril respectivamente; mayo-octubre 100% conforme, sin recaidas. CD Talara: solo octubre de 2026, 100% conforme desde la generacion. Solo registros generados REG_HIST_ de 2026 y preguntas 5S/5 s u OPL. Seleccion deterministica por equipo/mes. No modifica inspecciones manuales ni Talara.'
+      rule: 'Escenario generado 2026 para ambas agencias. Inspecciones conformes objetivo: enero 90%, febrero 94%, marzo 97%, abril-mayo 100%, junio 97%, julio 98%, agosto-octubre 100%. Redondeo por agencia/mes. Solo REG_HIST_ y preguntas 5S/OPL; conserva registros manuales.'
     };
 
     if (runSheet.getLastRow() < 2 || answerSheet.getLastRow() < 2) {
@@ -599,7 +605,7 @@ function appAplicarObservacionesHistoricas5sOpl_(options) {
       const issueChance = monthRule ? monthRule[monthKey.slice(5, 7)] : undefined;
 
       if (currentYear !== '2026' || !registroId || !isHistoricalRun || !dateKey || dateKey.slice(0, 4) !== currentYear ||
-          dateKey > scope.endDate || (scope.center && centro !== scope.center) || !issueChance) {
+          dateKey > scope.endDate || (scope.center && centro !== scope.center) || issueChance === undefined) {
         return;
       }
 
@@ -649,36 +655,51 @@ function appAplicarObservacionesHistoricas5sOpl_(options) {
       .getRange(2, runObservationIndex + 1, runSheet.getLastRow() - 1, 1)
       .getValues();
 
-    Object.keys(candidatesByRun).forEach(registroId => {
+    // Restablece solo las preguntas 5S/OPL de registros generados antes de aplicar la curva.
+    Object.keys(runsById).forEach(registroId => {
       const run = runsById[registroId];
-      const candidates = candidatesByRun[registroId];
-      const shouldHaveIssue = appStableNumber_([run.monthKey, run.equipoId, registroId, '5S_OPL']) % 100 < run.issueChance;
-
-      if (!shouldHaveIssue) {
-        return;
-      }
-
-      const selected = appSelectHistoricalIssueAnswers_(run, candidates);
-      const commentsByType = {};
-
-      selected.forEach(item => {
-        responseColumnValues[item.sheetRow - 2][0] = 'NO';
-        commentsByType[item.issueType] = appHistoricalIssueComment_(item.issueType, [
-          run.monthKey,
-          run.equipoId,
-          registroId,
-          item.preguntaId
-        ]);
-        result.answersToNo += 1;
-        result.byType[item.issueType] += 1;
+      observationColumnValues[run.sheetRow - 2][0] = APP_HISTORICAL_LABEL;
+      (candidatesByRun[registroId] || []).forEach(item => {
+        responseColumnValues[item.sheetRow - 2][0] = 'SI';
       });
-
-      const comments = Object.keys(commentsByType).map(type => commentsByType[type]);
-
-      if (comments.length) {
-        observationColumnValues[run.sheetRow - 2][0] = appMergeHistoricalObservation_(run.observaciones, comments);
-        result.runsWithObservation += 1;
-      }
+    });
+    const groups = {};
+    Object.keys(runsById).forEach(registroId => {
+      const run = runsById[registroId];
+      const key = run.centro + '|' + run.monthKey;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(run);
+    });
+    Object.keys(groups).sort().forEach(key => {
+      const group = groups[key];
+      const count = Math.round(group.length * group[0].issueChance / 100);
+      const phase = group[0].monthKey.slice(5, 7) < '04' ? 'INICIAL' : 'RECAIDA';
+      const eligible = group.filter(run => (candidatesByRun[run.registroId] || []).length)
+        .sort((a, b) => {
+          const scoreA = appStableNumber_([phase, a.centro, a.equipoId]);
+          const scoreB = appStableNumber_([phase, b.centro, b.equipoId]);
+          return scoreA - scoreB || String(a.equipoId).localeCompare(String(b.equipoId));
+        });
+      if (eligible.length < count) throw new Error('No hay suficientes preguntas 5S/OPL para ' + key);
+      eligible.slice(0, count).forEach(run => {
+        const selected = appSelectHistoricalIssueAnswers_(run, candidatesByRun[run.registroId]);
+        const commentsByType = {};
+        selected.forEach(item => {
+          responseColumnValues[item.sheetRow - 2][0] = 'NO';
+          commentsByType[item.issueType] = appHistoricalIssueComment_(item.issueType, [
+            run.monthKey, run.equipoId, run.registroId, item.preguntaId
+          ]);
+          result.answersToNo++;
+          result.byType[item.issueType]++;
+        });
+        const comments = Object.keys(commentsByType).map(type => commentsByType[type]);
+        observationColumnValues[run.sheetRow - 2][0] = APP_HISTORICAL_LABEL + '. ' + comments.join(' ');
+        result.runsWithObservation++;
+      });
+      result.byMonthAndCenter.push({ center: group[0].centro, month: group[0].monthKey,
+        inspections: group.length, withObservation: count,
+        targetCompliancePercent: 100 - group[0].issueChance,
+        compliancePercent: (group.length - count) * 100 / group.length });
     });
 
     if (!dryRun) {
@@ -786,7 +807,7 @@ function appCrearInspeccionesHistoricas_(options) {
           equipo.equipo_id,
           equipo.ubicacion,
           equipo.codigo,
-          ''
+          APP_HISTORICAL_LABEL
         ]);
 
         preguntas.forEach(pregunta => {
@@ -820,7 +841,7 @@ function appCrearInspeccionesHistoricas_(options) {
       skippedOutsidePeriod: skippedOutsidePeriod,
       skippedNoValidDate: skippedNoValidDate,
       auditor: auditor.auditor,
-      rule: 'CD Tumbes: enero de 2026 hasta la fecha limite. CD Talara: solo octubre de 2026 hasta la fecha limite. Dias 1 al 14, sin domingos, una inspeccion por equipo y mes si no existia.'
+      rule: 'Escenario generado para ambas agencias, enero-octubre de 2026 hasta la fecha limite. Dias 1 al 14, sin domingos, una inspeccion por equipo y mes si no existia.'
     };
 
     if (dryRun) {
