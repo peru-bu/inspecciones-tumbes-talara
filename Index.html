@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#20211e">
+  <title>Inspecciones · Agencias Tumbes y Talara</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --orange: #ffb800;
+      --orange-soft: #fff2c5;
+      --accent: #e77824;
+      --prussian: #20211e;
+      --prussian-deep: #30312b;
+      --black: #20211e;
+      --alabaster: #f5f3ec;
+      --white: #ffffff;
+      --done: #197047;
+      --done-soft: #eaf5ed;
+      --done-line: #b8d9c2;
+      --pending: #b44331;
+      --pending-soft: #fff0e9;
+      --pending-line: #edc8b9;
+      --bg: var(--alabaster);
+      --surface: #ffffff;
+      --surface-strong: #f8f7f2;
+      --surface-soft: #f3f2ec;
+      --line: #e5e3d9;
+      --text: #262820;
+      --muted: #686b60;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --shadow: 0 8px 28px rgba(40, 37, 24, .045);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: radial-gradient(ellipse at 90% 20%, #fff4d9 0, transparent 48%), var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', Inter, Roboto, Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+      touch-action: manipulation;
+    }
+
+    :focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 4px;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: grid;
+      gap: 12px;
+      padding: 20px 20px 16px;
+      background: var(--prussian);
+      color: var(--white);
+      border-top: 4px solid var(--orange);
+      border-bottom: 1px solid #383a32;
+      box-shadow: 0 8px 24px #20211e0d;
+    }
+
+    .app-header > * {
+      width: min(736px, 100%);
+      margin-inline: auto;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 40px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    .brand-row {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 12px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: linear-gradient(140deg, #ffd14d, var(--orange));
+      color: var(--black);
+      font-size: 15px;
+      font-weight: 900;
+      box-shadow: 0 4px 14px #ffb80020;
+    }
+
+    .brand-mark svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    .brand-caption {
+      margin-bottom: 4px;
+      color: #f7cb65;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .back-button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(255, 255, 255, .07);
+      color: var(--white);
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .back-button:disabled {
+      opacity: .3;
+      cursor: default;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin-top: 2px;
+      color: #c3c5ba;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status {
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .04);
+      color: #d6d8ce;
+      font-size: 12px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: normal;
+      overflow-wrap: anywhere;
+    }
+
+    .status.ok {
+      color: #c3e5bd;
+      background: #b6d9a80d;
+    }
+
+    .status.error {
+      color: #fecaca;
+      background: rgba(239, 68, 68, .16);
+    }
+
+    .step-bar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .step {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, .07);
+      color: #c3c5ba;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .step.active {
+      color: var(--black);
+      background: var(--orange);
+      box-shadow: 0 3px 10px #ffb80015;
+    }
+
+    .step.done {
+      color: #f7d984;
+      background: #ffb80012;
+    }
+
+    .app-main {
+      width: min(780px, 100%);
+      margin: 0 auto;
+      padding: 28px 20px;
+      padding-bottom: 92px;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .screen-title {
+      margin: 6px 0 10px;
+      font-size: clamp(25px, 5vw, 32px);
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .screen-copy {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .panel,
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 22px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      margin: 0 0 8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .02em;
+    }
+
+    select,
+    input,
+    textarea {
+      width: 100%;
+      min-height: 52px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      background: var(--surface-strong);
+      color: var(--text);
+      font-size: 16px;
+      outline: none;
+    }
+
+    select option {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    textarea {
+      min-height: 108px;
+      resize: vertical;
+    }
+
+    select:focus,
+    input:focus,
+    textarea:focus {
+      border-color: var(--orange);
+      box-shadow: 0 0 0 3px #ffb80026;
+    }
+
+    .primary,
+    .secondary,
+    .success,
+    .warning,
+    .danger-lite {
+      width: 100%;
+      min-height: 52px;
+      border-radius: var(--radius-md);
+      padding: 0 16px;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .primary {
+      background: linear-gradient(110deg, #ffce45, var(--orange));
+      color: var(--black);
+      box-shadow: 0 4px 12px #ecac0024;
+    }
+
+    .secondary {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    .success {
+      background: var(--done-soft);
+      color: var(--done);
+      border: 1px solid var(--done-line);
+    }
+
+    .warning {
+      background: var(--orange-soft);
+      color: var(--black);
+      border: 1px solid #efcf77;
+    }
+
+    .danger-lite {
+      border: 1px solid var(--line);
+      background: var(--surface-soft);
+      color: var(--muted);
+    }
+
+    .primary:disabled,
+    .secondary:disabled,
+    .success:disabled,
+    .warning:disabled,
+    .danger-lite:disabled {
+      opacity: .45;
+      cursor: default;
+    }
+
+    .list,
+    .choice-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      display: grid;
+      gap: 10px;
+      padding: 20px;
+      color: inherit;
+      text-align: left;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 3px;
+      background: linear-gradient(var(--orange), var(--accent));
+    }
+
+    .card.pending-card::before {
+      background: var(--pending);
+    }
+
+    .card.done-card::before {
+      background: var(--done);
+    }
+
+    .card:active {
+      transform: scale(.99);
+    }
+
+    .card-title-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .card-title {
+      min-width: 0;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .card-meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stat {
+      min-height: 60px;
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      padding: 8px;
+      border-radius: var(--radius-sm);
+      background: var(--surface-strong);
+      text-align: center;
+    }
+
+    .stat strong {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.pending {
+      color: var(--pending);
+      background: var(--pending-soft);
+    }
+
+    .badge.done {
+      color: var(--done);
+      background: var(--done-soft);
+    }
+
+    .badge.blocked {
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+
+    .item-actions {
+      margin-top: 4px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .summary {
+      margin-bottom: 14px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      color: var(--muted);
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+      box-shadow: var(--shadow);
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .summary-line {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .summary-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .mini-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .summary strong {
+      display: block;
+      color: var(--text);
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .stat.pending strong,
+    .stat.pending span {
+      color: var(--pending);
+    }
+
+    .stat.done strong,
+    .stat.done span {
+      color: var(--done);
+    }
+
+    .choice-button {
+      display: grid;
+      gap: 5px;
+      min-height: 84px;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      text-align: left;
+      color: var(--text);
+    }
+
+    .choice-button.success {
+      background: var(--done-soft);
+      color: var(--done);
+    }
+
+    .choice-button.warning {
+      background: var(--orange-soft);
+      color: var(--black);
+    }
+
+    .choice-step {
+      display: grid;
+      gap: 10px;
+    }
+
+    .choice-step.hidden {
+      display: none;
+    }
+
+    .choice-button strong {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .choice-button span {
+      font-size: 13px;
+      line-height: 1.4;
+      opacity: .85;
+    }
+
+    .question-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .question-row {
+      position: relative;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .question-row::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--line);
+    }
+
+    .question-row.answer-yes::before {
+      background: var(--done);
+    }
+
+    .question-row.answer-no::before {
+      background: var(--pending);
+    }
+
+    .question-text {
+      margin-bottom: 12px;
+      padding-left: 4px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 48px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: var(--surface-soft);
+    }
+
+    .segmented button {
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .segmented button.yes.active {
+      color: var(--white);
+      background: var(--done);
+    }
+
+    .segmented button.no.active {
+      color: var(--white);
+      background: var(--pending);
+    }
+
+    .sticky-actions {
+      position: sticky;
+      bottom: 0;
+      z-index: 12;
+      display: grid;
+      gap: 8px;
+      margin: 20px -22px -22px;
+      padding: 16px 22px;
+      background: #fffffff2;
+      border-top: 1px solid var(--line);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      backdrop-filter: blur(8px);
+    }
+
+    .empty {
+      padding: 22px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface-strong);
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    .welcome-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
+      color: #925014;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .welcome-label::before {
+      content: '';
+      width: 20px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--accent);
+    }
+
+    .agency-note {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .agency-note svg {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      color: #a5631b;
+    }
+
+    .brand-footer {
+      margin-top: 30px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+      letter-spacing: .04em;
+    }
+
+    @media (hover: hover) {
+      .primary:hover:not(:disabled) { background: #ffd14d; box-shadow: 0 6px 16px #ecac0033; }
+      .secondary:hover:not(:disabled) { background: var(--surface-soft); border-color: #c7c8bb; }
+      .card:hover:not(:disabled) { transform: translateY(-2px); border-color: #d6bc77; box-shadow: 0 12px 28px #2825180d; }
+      .choice-button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow); }
+      .back-button:hover:not(:disabled) { background: #ffffff26; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+
+    @media (max-width: 380px) {
+      .app-header { padding-inline: 14px; }
+      .app-main { padding-inline: 14px; }
+      .panel { padding: 18px; }
+      .sticky-actions { margin-inline: -18px; margin-bottom: -18px; padding-inline: 18px; }
+      .card-title-row { flex-wrap: wrap; }
+      .brand-caption { font-size: 9px; letter-spacing: .1em; }
+    }
+
+    @media (min-width: 720px) {
+      .app-main {
+        padding: 36px 22px 92px;
+      }
+
+      .list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .choice-grid,
+      .sticky-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="topbar">
+      <button id="backButton" class="back-button" type="button" aria-label="Volver">&lsaquo;</button>
+      <div class="brand-row">
+        <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4.5 6v5.5c0 4.2 3.2 7.4 7.5 9.5 4.3-2.1 7.5-5.3 7.5-9.5V6L12 3Z"/><path d="m8.5 12 2.3 2.3 4.7-4.8"/></svg></span>
+        <div>
+          <div class="brand-caption">Agencias · Tumbes y Talara</div>
+          <h1 id="headerTitle">Inspecciones</h1>
+          <div id="headerSubtitle" class="subtitle">Selecciona una agencia</div>
+        </div>
+      </div>
+    </div>
+    <div id="status" class="status" role="status" aria-live="polite">Cargando...</div>
+    <div class="step-bar" aria-label="Avance">
+      <div id="stepSede" class="step">Agencia</div>
+      <div id="stepEquipo" class="step">Equipo</div>
+      <div id="stepItem" class="step">Item</div>
+      <div id="stepAuditoria" class="step">Auditar</div>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section id="viewSede" class="view">
+      <div class="welcome-label">Seguridad en cada detalle</div>
+      <h2 class="screen-title">Una inspección.<br>Un entorno más seguro.</h2>
+      <p class="screen-copy">Inspecciones de las agencias de Tumbes y Talara.<br>Elige tu agencia para comenzar el recorrido.</p>
+      <div class="panel">
+        <div class="field">
+          <label for="centroSelect">¿Dónde vas a inspeccionar?</label>
+          <select id="centroSelect"></select>
+        </div>
+        <button id="continueCenter" class="primary" type="button">Comenzar inspección &rarr;</button>
+        <button id="reloadMasters" class="secondary" type="button" style="margin-top: 10px;">Actualizar equipos y auditores</button>
+        <div class="agency-note"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="m8 13 3 3 5-6"/></svg><span>Revisa, registra y contribuye a una operación segura.</span></div>
+      </div>
+    </section>
+
+    <section id="viewTipos" class="view">
+      <h2 class="screen-title">Equipos de la agencia</h2>
+      <p class="screen-copy">Cada tarjeta resume cuantos items contiene y cuantos faltan inspeccionar este mes.</p>
+      <div id="typeList" class="list"></div>
+    </section>
+
+    <section id="viewItems" class="view">
+      <h2 id="itemsTitle" class="screen-title">Contenido</h2>
+      <p id="itemsCopy" class="screen-copy">Selecciona el item especifico que vas a auditar.</p>
+      <div class="panel" style="margin-bottom: 12px;">
+        <div class="field" style="margin-bottom: 0;">
+          <label for="itemSearch">Buscar item</label>
+          <input id="itemSearch" autocomplete="off" placeholder="Codigo o ubicacion">
+        </div>
+      </div>
+      <div id="itemList" class="list"></div>
+    </section>
+
+    <section id="viewAudit" class="view">
+      <h2 class="screen-title">Auditar item</h2>
+      <div id="auditSummary" class="summary"></div>
+      <div class="panel">
+        <div class="field">
+          <label for="auditorInput">Auditor</label>
+          <select id="auditorInput"></select>
+        </div>
+        <button id="confirmAuditor" class="primary" type="button">Continuar</button>
+        <div id="auditChoices" class="choice-step hidden">
+          <div id="auditAuditorBadge" class="summary-tags"></div>
+          <div class="choice-grid">
+            <button id="auditNoObservation" class="choice-button success" type="button">
+              <strong>Sin observacion</strong>
+              <span>Guarda todas las respuestas como SI y sin observaciones.</span>
+            </button>
+            <button id="auditWithObservation" class="choice-button warning" type="button">
+              <strong>Con observacion</strong>
+              <span>Abre las preguntas para marcar al menos un NO y escribir detalle.</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="viewQuestions" class="view">
+      <h2 class="screen-title">Inspeccion con observacion</h2>
+      <div id="questionSummary" class="summary"></div>
+      <div id="questionList" class="question-list"></div>
+      <div class="panel" style="margin-top: 12px;">
+        <div class="field" style="margin-bottom: 0;">
+          <label for="observations">Observacion</label>
+          <textarea id="observations" placeholder="Describe que se encontro y donde esta el problema"></textarea>
+        </div>
+        <div class="sticky-actions">
+          <button id="markAllYes" class="secondary" type="button">Todo SI</button>
+          <button id="saveObservationAudit" class="primary" type="button">Guardar observacion</button>
+        </div>
+      </div>
+    </section>
+    <footer class="brand-footer">Agencias Tumbes y Talara · Comprometidos con la seguridad</footer>
+  </main>
+
+  <script>
+    const APPS_SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbxTveQj0B-B-JH21_NvXnQDpxuZeXrsRQnTpYhu83CWCDcTm8YgPMSLYQ2pg3ZZh3tUgA/exec';
+
+    const state = {
+      centers: [],
+      auditors: [],
+      tipos: [],
+      items: [],
+      questions: [],
+      answers: {},
+      currentView: 'sede',
+      centroId: '',
+      selectedType: null,
+      selectedItem: null,
+      selectedStatus: null,
+      auditorId: '',
+      auditor: '',
+      auditorConfirmed: false
+    };
+
+    const viewConfig = {
+      sede: {
+        id: 'viewSede',
+        title: 'Inspecciones',
+        subtitle: 'Selecciona una agencia',
+        back: null
+      },
+      tipos: {
+        id: 'viewTipos',
+        title: 'Equipos',
+        subtitle: 'Resumen de la agencia',
+        back: 'sede'
+      },
+      items: {
+        id: 'viewItems',
+        title: 'Contenido',
+        subtitle: 'Items del equipo',
+        back: 'tipos'
+      },
+      audit: {
+        id: 'viewAudit',
+        title: 'Auditar',
+        subtitle: 'Confirma el auditor',
+        back: 'items'
+      },
+      questions: {
+        id: 'viewQuestions',
+        title: 'Con observacion',
+        subtitle: 'Marca el hallazgo',
+        back: 'audit'
+      }
+    };
+
+    const $ = selector => document.querySelector(selector);
+
+    document.addEventListener('DOMContentLoaded', init);
+
+    function bindEvents() {
+      $('#backButton').addEventListener('click', goBack);
+      $('#continueCenter').addEventListener('click', continueFromCenter);
+      $('#reloadMasters').addEventListener('click', reloadMasters);
+      $('#itemSearch').addEventListener('input', renderItems);
+      $('#auditorInput').addEventListener('change', () => {
+        const auditor = getSelectedAuditor();
+        state.auditorId = auditor ? auditor.auditor_id : '';
+        state.auditor = auditor ? auditor.auditor : '';
+        state.auditorConfirmed = false;
+        hideAuditChoices();
+        setAuditButtonsDisabled(false);
+      });
+      $('#confirmAuditor').addEventListener('click', confirmAuditor);
+      $('#auditNoObservation').addEventListener('click', saveNoObservation);
+      $('#auditWithObservation').addEventListener('click', startObservationAudit);
+      $('#markAllYes').addEventListener('click', markAllYes);
+      $('#saveObservationAudit').addEventListener('click', saveObservationAudit);
+    }
+
+    async function init() {
+      bindEvents();
+
+      try {
+        setStatus('Cargando maestros...');
+        showView('sede');
+        const data = await runApi('getInitialData');
+        state.centers = data.centers || [];
+        state.auditors = data.auditors || [];
+        renderInitialData();
+        setStatus(data.readyMessage || 'Sistema listo', 'ok');
+      } catch (error) {
+        setStatus(error.message || String(error), 'error');
+      }
+    }
+
+    function isAppsScriptRuntime() {
+      return Boolean(window.google && google.script && google.script.run);
+    }
+
+    function renderInitialData() {
+      $('#centroSelect').innerHTML = '<option value="">Seleccionar agencia</option>' +
+        state.centers.map(item => `<option value="${escapeHtml(item.centro_id)}">${escapeHtml(item.centro)}</option>`).join('');
+      $('#auditorInput').innerHTML = '<option value="">Seleccionar auditor</option>' +
+        state.auditors
+          .map(item => `<option value="${escapeHtml(item.auditor_id)}">${escapeHtml(item.auditor)}</option>`)
+          .join('');
+      setAuditButtonsDisabled(false);
+
+      if (state.centers.length === 1) {
+        $('#centroSelect').value = state.centers[0].centro_id;
+      }
+    }
+
+    async function continueFromCenter() {
+      const centroId = $('#centroSelect').value;
+      if (!centroId) {
+        setStatus('Selecciona una agencia.', 'error');
+        return;
+      }
+
+      state.centroId = centroId;
+      state.selectedType = null;
+      state.selectedItem = null;
+      state.selectedStatus = null;
+      state.items = [];
+      state.questions = [];
+      state.answers = {};
+
+      try {
+        setStatus('Cargando equipos...');
+        showView('tipos');
+        const data = await runApi('getTiposPorCentro', centroId);
+        state.tipos = data.tipos || [];
+        renderTypes();
+        setStatus(`${state.tipos.length} equipos disponibles`, 'ok');
+      } catch (error) {
+        setStatus(error.message || String(error), 'error');
+      }
+    }
+
+    async function reloadMasters() {
+      try {
+        $('#reloadMasters').disabled = true;
+        setStatus('Actualizando cache...');
+        await runApi('cargarMaestros');
+        const data = await runApi('getInitialData');
+        state.centers = data.centers || [];
+        state.auditors = data.auditors || [];
+        renderInitialData();
+        setStatus('Cache actualizado.', 'ok');
+      } catch (error) {
+        setStatus(error.message || String(error), 'error');
+      } finally {
+        $('#reloadMasters').disabled = false;
+      }
+    }
+
+    function renderTypes() {
+      $('#typeList').innerHTML = state.tipos.map(item => {
+        const typeCardClass = item.pendingThisMonth > 0 ? 'pending-card' : 'done-card';
+        return `<button class="card ${typeCardClass}" type="button" data-id="${escapeHtml(item.inspeccion_id)}">
+          <span class="card-title-row">
+            <span class="card-title">${escapeHtml(item.inspeccion)}</span>
+            <span class="badge ${item.pendingThisMonth > 0 ? 'pending' : 'done'}">${escapeHtml(item.pendingThisMonth)} pend.</span>
+          </span>
+          <span class="card-meta">${item.lastInspectionDate ? `Ultima inspeccion: ${escapeHtml(item.lastInspectionDate)}` : 'Sin inspecciones registradas'}</span>
+          <span class="stat-grid">
+            <span class="stat"><strong>${escapeHtml(item.total)}</strong><span>Total</span></span>
+            <span class="stat pending"><strong>${escapeHtml(item.pendingThisMonth)}</strong><span>Pendientes</span></span>
+            <span class="stat done"><strong>${escapeHtml(item.doneThisMonth)}</strong><span>Hechos</span></span>
+          </span>
+        </button>`;
+      }).join('') || '<div class="empty">No hay equipos para esta agencia.</div>';
+
+      document.querySelectorAll('#typeList .card').forEach(card => {
+        card.addEventListener('click', () => loadItems(card.dataset.id));
+      });
+    }
+
+    async function loadItems(inspeccionId, options = {}) {
+      const selectedType = state.tipos.find(item => item.inspeccion_id === inspeccionId);
+      if (!selectedType) return;
+
+      state.selectedType = selectedType;
+      state.selectedItem = null;
+      state.selectedStatus = null;
+      state.questions = [];
+      state.answers = {};
+      $('#itemSearch').value = '';
+      $('#itemsTitle').textContent = selectedType.inspeccion;
+      $('#itemsCopy').textContent = `${selectedType.pendingThisMonth} pendientes de ${selectedType.total} este mes.`;
+
+      try {
+        if (!options.silent) setStatus('Cargando contenido...');
+        showView('items');
+        const data = await runApi('getEquiposPorTipo', state.centroId, inspeccionId);
+        state.items = data.equipos || [];
+        renderItems();
+        if (!options.silent) setStatus(`${state.items.length} items encontrados`, 'ok');
+      } catch (error) {
+        setStatus(error.message || String(error), 'error');
+      }
+    }
+
+    function renderItems() {
+      const term = normalize($('#itemSearch').value);
+      const filtered = state.items.filter(item => {
+        const text = `${item.etiqueta || ''} ${item.codigo || ''} ${item.ubicacion || ''}`;
+        return normalize(text).includes(term);
+      });
+
+      $('#itemList').innerHTML = filtered.map(item => {
+        const done = Boolean(item.doneThisMonth);
+        const badgeClass = done ? 'done' : 'pending';
+        const badgeText = done ? 'Hecho este mes' : 'Pendiente';
+        const meta = done
+          ? `Realizado: ${escapeHtml(item.doneThisMonthDate || item.lastInspectionDate || '-')}`
+          : (item.lastInspectionDate ? `Ultima inspeccion: ${escapeHtml(item.lastInspectionDate)}` : 'Sin inspecciones registradas');
+
+        return `<div class="card ${done ? 'done-card' : 'pending-card'}">
+          <span class="card-title-row">
+            <span class="card-title">${escapeHtml(item.etiqueta || item.codigo || item.ubicacion || 'Item')}</span>
+            <span class="badge ${badgeClass}">${badgeText}</span>
+          </span>
+          <span class="card-meta">${meta}</span>
+          <span class="card-meta">Codigo: ${escapeHtml(item.codigo || '-')}<br>Ubicacion: ${escapeHtml(item.ubicacion || '-')}</span>
+          <span class="item-actions">
+            <button class="primary" type="button" data-id="${escapeHtml(item.equipo_id)}">Auditar</button>
+          </span>
+        </div>`;
+      }).join('') || '<div class="empty">No hay items con ese filtro.</div>';
+
+      document.querySelectorAll('#itemList button[data-id]').forEach(button => {
+        button.addEventListener('click', () => openAudit(button.dataset.id));
+      });
+    }
+
+    function openAudit(equipoId) {
+      const item = state.items.find(record => record.equipo_id === equipoId);
+      if (!item) return;
+
+      state.selectedItem = item;
+      state.selectedStatus = {
+        doneThisMonth: Boolean(item.doneThisMonth),
+        doneThisMonthDate: item.doneThisMonthDate || '',
+        lastInspectionDate: item.lastInspectionDate || '',
+        lastAuditor: item.lastAuditor || ''
+      };
+      state.questions = [];
+      state.answers = {};
+      state.auditorId = '';
+      state.auditor = '';
+      state.auditorConfirmed = false;
+      $('#auditorInput').value = '';
+      $('#observations').value = '';
+
+      renderAuditSummary();
+      hideAuditChoices();
+      showView('audit');
+      setAuditButtonsDisabled(false);
+      setStatus('Selecciona el auditor para continuar.', 'ok');
+    }
+
+    function renderAuditSummary() {
+      const item = state.selectedItem || {};
+      const status = state.selectedStatus || {};
+      const lastText = status.lastInspectionDate
+        ? `Ultima inspeccion: ${escapeHtml(status.lastInspectionDate)}`
+        : 'Sin inspecciones registradas';
+      const statusBadge = status.doneThisMonth
+        ? '<span class="badge done">Hecho este mes</span>'
+        : '<span class="badge pending">Pendiente este mes</span>';
+      const monthText = status.doneThisMonth
+        ? `Realizado este mes: ${escapeHtml(status.doneThisMonthDate || status.lastInspectionDate || '-')}`
+        : 'Pendiente este mes';
+
+      $('#auditSummary').innerHTML = `<div class="summary-grid">
+        <strong>${escapeHtml(item.etiqueta || item.codigo || item.ubicacion || 'Item')}</strong>
+        <div class="summary-line">${escapeHtml(item.tipo_equipo || '')}</div>
+        <div class="summary-tags">
+          ${statusBadge}
+          <span class="mini-chip">${lastText}</span>
+          <span class="mini-chip">${monthText}</span>
+        </div>
+        <div class="summary-line">Codigo: ${escapeHtml(item.codigo || '-')}<br>Ubicacion: ${escapeHtml(item.ubicacion || '-')}</div>
+      </div>`;
+    }
+
+    async function saveNoObservation() {
+      if (!state.selectedItem) return;
+      const auditor = getConfirmedAuditorOrFocus();
+      if (!auditor) return;
+
+      try {
+        setAuditButtonsDisabled(true);
+        setStatus('Guardando sin observacion...');
+        const result = await runApi('guardarInspeccionSinObservacion', {
+          equipo_id: state.selectedItem.equipo_id,
+          auditor_id: auditor.auditor_id,
+          auditor: auditor.auditor
+        });
+        setStatus(result.message || 'Guardado', 'ok');
+        await refreshAfterSave();
+      } catch (error) {
+        setStatus(error.message || String(error), 'error');
+      } finally {
+        setAuditButtonsDisabled(false);
+      }
+    }
+
+    async function startObservationAudit() {
+      if (!state.selectedItem) return;
+      const auditor = getConfirmedAuditorOrFocus();
+      if (!auditor) return;
+
+      try {
+        setAuditButtonsDisabled(true);
+        setStatus('Cargando preguntas...');
+        const data = await runApi('getFormularioInspeccion', state.selectedItem.equipo_id);
+        state.selectedStatus = data.status || state.selectedStatus;
+        renderAuditSummary();
+
+        state.questions = data.preguntas || [];
+        state.answers = {};
+        $('#observations').value = '';
+        renderQuestions();
+        showView('questions');
+        setStatus('Responde SI o NO en cada pregunta.', 'ok');
+      } catch (error) {
+        setStatus(error.message || String(error), 'error');
+      } finally {
+        setAuditButtonsDisabled(false);
+      }
+    }
+
+    function renderQuestions() {
+      const item = state.selectedItem || {};
+      $('#questionSummary').innerHTML = `<div class="summary-grid">
+        <strong>${escapeHtml(item.etiqueta || item.codigo || item.ubicacion || 'Item')}</strong>
+        <div class="summary-tags">
+          <span class="mini-chip">${escapeHtml(item.tipo_equipo || '-')}</span>
+          <span class="mini-chip">Auditor: ${escapeHtml(state.auditor || '-')}</span>
+        </div>
+        <div class="summary-line">Responde SI o NO en cada pregunta. Si marcas NO, describe el hallazgo.</div>
+      </div>`;
+
+      $('#questionList').innerHTML = state.questions.map(question => {
+        const answer = state.answers[question.pregunta_id] || '';
+        const rowClass = answer === 'NO' ? 'answer-no' : answer === 'SI' ? 'answer-yes' : '';
+        return `<div class="question-row ${rowClass}">
+          <div class="question-text">${escapeHtml(question.orden)}. ${escapeHtml(question.pregunta)}</div>
+          <div class="segmented" data-id="${escapeHtml(question.pregunta_id)}">
+            <button class="yes ${answer === 'SI' ? 'active' : ''}" type="button" data-value="SI">SI</button>
+            <button class="no ${answer === 'NO' ? 'active' : ''}" type="button" data-value="NO">NO</button>
+          </div>
+        </div>`;
+      }).join('') || '<div class="empty">No hay preguntas configuradas para este equipo.</div>';
+
+      document.querySelectorAll('.segmented button').forEach(button => {
+        button.addEventListener('click', () => {
+          const group = button.closest('.segmented');
+          const row = button.closest('.question-row');
+          state.answers[group.dataset.id] = button.dataset.value;
+          group.querySelectorAll('button').forEach(item => item.classList.remove('active'));
+          button.classList.add('active');
+          row.classList.toggle('answer-yes', button.dataset.value === 'SI');
+          row.classList.toggle('answer-no', button.dataset.value === 'NO');
+        });
+      });
+    }
+
+    function markAllYes() {
+      state.questions.forEach(question => {
+        state.answers[question.pregunta_id] = 'SI';
+      });
+      renderQuestions();
+      setStatus('Todas las respuestas quedaron en SI.', 'ok');
+    }
+
+    async function saveObservationAudit() {
+      if (!state.selectedItem) return;
+      const auditor = getConfirmedAuditorOrFocus();
+      if (!auditor) return;
+
+      const unanswered = state.questions.find(question => !state.answers[question.pregunta_id]);
+      const observations = $('#observations').value.trim();
+
+      if (unanswered) {
+        setStatus(`Responde la pregunta ${unanswered.orden}: ${unanswered.pregunta}`, 'error');
+        return;
+      }
+
+      const hasNo = state.questions.some(question => state.answers[question.pregunta_id] === 'NO');
+
+      if (!hasNo) {
+        setStatus('Marca al menos una respuesta en NO.', 'error');
+        return;
+      }
+
+      if (!observations) {
+        setStatus('Escribe la observacion.', 'error');
+        $('#observations').focus();
+        return;
+      }
+
+      try {
+        $('#saveObservationAudit').disabled = true;
+        setStatus('Guardando con observacion...');
+        const result = await runApi('guardarInspeccion', {
+          equipo_id: state.selectedItem.equipo_id,
+          auditor_id: auditor.auditor_id,
+          auditor: auditor.auditor,
+          modo: 'CON_OBSERVACION',
+          observaciones: observations,
+          respuestas: state.questions.map(question => ({
+            pregunta_id: question.pregunta_id,
+            respuesta: state.answers[question.pregunta_id]
+          }))
+        });
+        setStatus(result.message || 'Guardado', 'ok');
+        await refreshAfterSave();
+      } catch (error) {
+        setStatus(error.message || String(error), 'error');
+      } finally {
+        $('#saveObservationAudit').disabled = false;
+      }
+    }
+
+    async function refreshAfterSave() {
+      const typeId = state.selectedType ? state.selectedType.inspeccion_id : '';
+      state.selectedItem = null;
+      state.selectedStatus = null;
+      state.questions = [];
+      state.answers = {};
+
+      const tiposData = await runApi('getTiposPorCentro', state.centroId);
+      state.tipos = tiposData.tipos || [];
+      state.selectedType = state.tipos.find(item => item.inspeccion_id === typeId) || state.selectedType;
+
+      if (typeId) {
+        const itemsData = await runApi('getEquiposPorTipo', state.centroId, typeId);
+        state.items = itemsData.equipos || [];
+        $('#itemsCopy').textContent = state.selectedType
+          ? `${state.selectedType.pendingThisMonth} pendientes de ${state.selectedType.total} este mes.`
+          : 'Selecciona el item especifico que vas a auditar.';
+        renderItems();
+      }
+
+      showView('items');
+    }
+
+    function getAuditorOrFocus() {
+      const auditor = getSelectedAuditor();
+      if (!auditor) {
+        setStatus('Selecciona un auditor del desplegable.', 'error');
+        $('#auditorInput').focus();
+        return null;
+      }
+
+      state.auditorId = auditor.auditor_id;
+      state.auditor = auditor.auditor;
+      return auditor;
+    }
+
+    function getConfirmedAuditorOrFocus() {
+      const auditor = getAuditorOrFocus();
+      if (!auditor) return null;
+
+      if (!state.auditorConfirmed) {
+        state.auditorConfirmed = true;
+        showAuditChoices();
+      }
+
+      return auditor;
+    }
+
+    function confirmAuditor() {
+      const auditor = getAuditorOrFocus();
+      if (!auditor) return;
+
+      state.auditorConfirmed = true;
+      showAuditChoices();
+      setStatus('Auditor confirmado. Elige el tipo de auditoria.', 'ok');
+    }
+
+    function showAuditChoices() {
+      $('#auditAuditorBadge').innerHTML = `<span class="mini-chip">Auditor: ${escapeHtml(state.auditor || '-')}</span>`;
+      $('#auditChoices').classList.remove('hidden');
+      setAuditButtonsDisabled(false);
+    }
+
+    function hideAuditChoices() {
+      $('#auditAuditorBadge').innerHTML = '';
+      $('#auditChoices').classList.add('hidden');
+    }
+
+    function setAuditButtonsDisabled(disabled) {
+      const hasAuditor = Boolean($('#auditorInput').value);
+      const canChooseAuditMode = !disabled && hasAuditor && state.auditorConfirmed;
+      $('#confirmAuditor').disabled = disabled || !hasAuditor;
+      $('#auditNoObservation').disabled = !canChooseAuditMode;
+      $('#auditWithObservation').disabled = !canChooseAuditMode;
+    }
+
+    function getSelectedAuditor() {
+      const auditorId = $('#auditorInput').value;
+      return state.auditors.find(item => item.auditor_id === auditorId) || null;
+    }
+
+    function showView(name) {
+      state.currentView = name;
+      Object.keys(viewConfig).forEach(key => {
+        $('#' + viewConfig[key].id).classList.toggle('active', key === name);
+      });
+
+      $('#headerTitle').textContent = viewConfig[name].title;
+      $('#headerSubtitle').textContent = buildSubtitle(name);
+      $('#backButton').disabled = !viewConfig[name].back;
+      updateSteps();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function buildSubtitle(name) {
+      const base = viewConfig[name].subtitle;
+      if (name === 'sede') return base;
+
+      const centro = state.centers.find(item => item.centro_id === state.centroId);
+      return centro ? `${centro.centro} · ${base}` : base;
+    }
+
+    function goBack() {
+      const target = viewConfig[state.currentView].back;
+      if (!target) return;
+      showView(target);
+    }
+
+    function updateSteps() {
+      setStep('stepSede', state.centroId ? 'done' : 'active');
+      setStep('stepEquipo', state.selectedType ? 'done' : state.centroId ? 'active' : '');
+      setStep('stepItem', state.selectedItem ? 'done' : state.selectedType ? 'active' : '');
+      setStep('stepAuditoria', ['audit', 'questions'].includes(state.currentView) ? 'active' : '');
+    }
+
+    function setStep(id, stateName) {
+      const element = $('#' + id);
+      element.className = `step${stateName ? ` ${stateName}` : ''}`;
+    }
+
+    function runApi(name, ...args) {
+      if (isAppsScriptRuntime()) {
+        return runAppsScriptApi(name, ...args);
+      }
+
+      return runJsonpApi(name, args);
+    }
+
+    function runAppsScriptApi(name, ...args) {
+      return new Promise((resolve, reject) => {
+        const runner = google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(error => reject(new Error(error.message || error)));
+        runner[name](...args);
+      });
+    }
+
+    function runJsonpApi(name, args) {
+      return new Promise((resolve, reject) => {
+        if (!APPS_SCRIPT_API_URL) {
+          reject(new Error('Falta configurar la URL del Apps Script de Tumbes y Talara.'));
+          return;
+        }
+
+        const callback = `__inspectionApi_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const script = document.createElement('script');
+        const timeout = window.setTimeout(() => {
+          cleanup();
+          reject(new Error('No hubo respuesta del backend.'));
+        }, 30000);
+
+        function cleanup() {
+          window.clearTimeout(timeout);
+          delete window[callback];
+          script.remove();
+        }
+
+        window[callback] = payload => {
+          cleanup();
+
+          if (payload && payload.ok === false && payload.error) {
+            reject(new Error(payload.error));
+            return;
+          }
+
+          resolve(payload);
+        };
+
+        script.onerror = () => {
+          cleanup();
+          reject(new Error('No se pudo conectar con Apps Script.'));
+        };
+
+        const params = new URLSearchParams({
+          api: '1',
+          fn: name,
+          args: JSON.stringify(args),
+          callback
+        });
+        script.src = `${APPS_SCRIPT_API_URL}?${params.toString()}`;
+        document.body.appendChild(script);
+      });
+    }
+
+    function setStatus(message, type) {
+      const status = $('#status');
+      status.textContent = message;
+      status.className = `status${type ? ` ${type}` : ''}`;
+    }
+
+    function normalize(value) {
+      return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
